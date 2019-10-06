@@ -1,0 +1,17 @@
+project Routers is
+
+   for Source_Dirs use ("Sources/**");
+   for Object_Dir use "Objects";
+   for Exec_Dir use "Executables";
+   for Main use ("test_routers.adb");
+
+   package Compiler is
+      for Default_Switches ("ada") use ("-gnatw.el", "-gnat05", "-fstack-check", "-gnatE", "-gnato", "-g", "-gnatVn");
+   end Compiler;
+
+   package Builder is
+      for Default_Switches ("ada") use ("-s");
+   end Builder;
+
+end Routers;
+
