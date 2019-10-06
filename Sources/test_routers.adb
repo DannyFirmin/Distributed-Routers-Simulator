@@ -1,21 +1,22 @@
 --
---  Uwe R. Zimmer, Australia, September 2011
+--  Uwe R. Zimmer, Australia, September 2016
 --
 
-with Ada.Float_Text_IO;                    use Ada.Float_Text_IO;
-with Ada.Integer_Text_IO;                  use Ada.Integer_Text_IO;
-with Ada.Text_IO;                          use Ada.Text_IO;
+with Ada.Float_Text_IO;                use Ada.Float_Text_IO;
+with Ada.Integer_Text_IO;              use Ada.Integer_Text_IO;
+with Ada.Numerics.Discrete_Random;     use Ada.Numerics;
+with Ada.Text_IO;                      use Ada.Text_IO;
 with Generic_Message_Structures;
 with Generic_Router;
 with Generic_Routers;
 with Generic_Routers_Configuration;
-with GNAT.Command_Line;                    use GNAT.Command_Line;
-with Routers_Configuration_Structures;      use Routers_Configuration_Structures;
-with Topologies;                           use Topologies;
+with GNAT.Command_Line;                use GNAT.Command_Line;
+with Routers_Configuration_Structures; use Routers_Configuration_Structures;
+with Topologies;                       use Topologies;
 
 procedure Test_Routers is
 
-   Command_Line_Parameters : Command_Line_Defaults;
+   Command_Line_Parameters : Command_Line_Options;
    Options_Ok              : Boolean               := True;
 
    procedure Print_Options is
@@ -38,6 +39,7 @@ procedure Test_Routers is
       New_Line; Put ("   [-o {Comms timeout       : Seconds  }] -> "); Put (Float (Command_Line_Parameters.Comms_Timeout), 2, 2, 0);
       New_Line; Put ("   [-m {Test mode           : String   }] -> "); Put (Test_Modes'Image (Command_Line_Parameters.Test_Mode));
       New_Line; Put ("      Available modes: One_to_All, All_to_One");
+      New_Line; Put ("   [-x {Dropouts            : Natural  }] -> "); Put (Command_Line_Parameters.Dropouts, 3);
       New_Line;
       New_Line;
    end Print_Options;
@@ -46,7 +48,7 @@ begin
    Initialize_Option_Scan;
    loop
       declare
-         Option : constant Character := Getopt ("t: s: g: p: d: c: i: w: o: m:");
+         Option : constant Character := Getopt ("t: s: g: p: d: c: i: w: o: m: x:");
       begin
          case Option is
             when ASCII.NUL => exit;
@@ -60,6 +62,7 @@ begin
             when 'w' => Command_Line_Parameters.Routers_Settle_Time := Duration'Value (Parameter);
             when 'o' => Command_Line_Parameters.Comms_Timeout       := Duration'Value (Parameter);
             when 'm' => Command_Line_Parameters.Test_Mode           := Test_Modes'Value (Parameter);
+            when 'x' => Command_Line_Parameters.Dropouts            := Natural'Value (Parameter);
             when others => raise Program_Error;
          end case;
       exception
@@ -79,15 +82,20 @@ begin
       declare
 
          package Routers_Configuration is new Generic_Routers_Configuration (Command_Line_Parameters);
-         package Message_Structures   is new Generic_Message_Structures   (Routers_Configuration);
-         package Router               is new Generic_Router               (Message_Structures);
-         package Routers              is new Generic_Routers              (Router);
+         package Message_Structures    is new Generic_Message_Structures    (Routers_Configuration);
+         package Router                is new Generic_Router                (Message_Structures);
+         package Routers               is new Generic_Routers               (Router);
 
          use Routers_Configuration;
          use Message_Structures;
          use Routers;
 
+         package Random_Router         is new Discrete_Random               (Router_Range);
+         use Random_Router;
+
          use Message_Strings;
+
+         Router_Generator : Generator;
 
          type Distances_Map is array (Router_Range, Router_Range) of Natural;
 
@@ -113,10 +121,14 @@ begin
                   if i = j then
                      Put (" . ");
                   elsif Nodes_Connected (Connection_Topology, Positive (i), Positive (j)) then
-                     if Nodes_Connected (Connection_Topology, Positive (j), Positive (i)) then
-                        Put ("<->");
+                     if Router_Active (i) and then Router_Active (j) then
+                        if Nodes_Connected (Connection_Topology, Positive (j), Positive (i)) then
+                           Put ("<->");
+                        else
+                           Put (" ->");
+                        end if;
                      else
-                        Put (" ->");
+                        Put (" x ");
                      end if;
                   else
                      Put ("   ");
@@ -156,8 +168,10 @@ begin
                      Put ("  .");
                   elsif Map (i, j) = 1 then
                      Put ("   ");
-                  else
+                  elsif Router_Active (i) and then Router_Active (j) then
                      Put (Map (i, j), 3);
+                  else
+                     Put ("  x");
                   end if;
                end loop;
                Put ('|');
@@ -179,6 +193,24 @@ begin
             Put ("  Time for routers to establish their strategies : "); Put (Float (Command_Line_Parameters.Routers_Settle_Time), 2, 2, 0); Put (" second(s)"); New_Line;
 
             delay Command_Line_Parameters.Routers_Settle_Time; -- let the routers establish their strategies first
+
+            if Command_Line_Parameters.Dropouts > 0 then
+               Reset (Router_Generator);
+               for Id in 1 .. Command_Line_Parameters.Dropouts loop
+                  loop
+                     declare
+                        Candidate : constant Router_Range := Random (Router_Generator);
+                     begin
+                        if Router_Active (Candidate) then
+                           Router_Shutdown (Candidate);
+                           Put ("   -> Router"); Put (Integer (Candidate), 3); Put_Line (" dropped service");
+                           exit;
+                        end if;
+                     end;
+                  end loop;
+               end loop;
+               Put (Command_Line_Parameters.Dropouts); Put_Line (" routers in total dropped out.");
+            end if;
 
             Put_Line ("------------------------------ Measurements ------------------------------------");
 
@@ -227,7 +259,7 @@ begin
             begin
                Main_Measurement : for i in Router_Range loop
                   for j in Router_Range loop
-                     if i /= j then
+                     if i /= j and then Router_Active (i) and then Router_Active (j) then
                         case Command_Line_Parameters.Test_Mode is
                            when One_To_All => Measurements_Successful := Send_Probe (i, j);
                            when All_to_One => Measurements_Successful := Send_Probe (j, i);
@@ -238,7 +270,7 @@ begin
                      end if;
                   end loop;
                   for j in Router_Range loop
-                     if i /= j then
+                     if i /= j and then Router_Active (i) and then Router_Active (j) then
                         case Command_Line_Parameters.Test_Mode is
                            when One_To_All => Measurements_Successful := Receive_Probe (i, j);
                            when All_to_One => Measurements_Successful := Receive_Probe (j, i);
