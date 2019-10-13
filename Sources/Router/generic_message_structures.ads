@@ -32,5 +32,20 @@ package Generic_Message_Structures is
    -- to communicate with your router.
 
    --  Add one or multiple more messages formats here ..
+   type Routing_Table_Entry is record
+      -- Destination is the array index
+      Cost : Natural := 0;
+      Next_Hop : Router_Range := Router_Range'Invalid_Value;
+      Online : Boolean := True;
+   end record;
+
+   type Routing_Table is array (Router_Range) of Routing_Table_Entry;
+
+   type Router_Messages is record
+      Sender : Router_Range := Router_Range'Invalid_Value;
+      Destination : Router_Range := Router_Range'Invalid_Value;
+      Offline_Broadcast : Boolean := False;
+      The_Routing_Table : Routing_Table;
+   end record;
 
 end Generic_Message_Structures;
