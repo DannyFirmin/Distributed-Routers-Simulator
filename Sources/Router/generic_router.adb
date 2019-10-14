@@ -21,7 +21,7 @@ package body Generic_Router is
 
          Message_Receive : Messages_Mailbox;
          Message_Send : Messages_Client;
-         Message_Router : Router_Messages;
+         RouterMsg : Router_Messages;
 
          type Sent_Arr_Index_Type is mod 99;
          type Sent_Arr_Type is array (Sent_Arr_Index_Type) of Router_Messages;
@@ -35,19 +35,19 @@ package body Generic_Router is
          task body Dynamic_Sender is
          begin
             for nbr of Port_List loop
-               Message_Router := (Sender => Task_Id,
+               RouterMsg := (Sender => Task_Id,
                                   Destination => nbr.Id,
                                   Offline_Broadcast => False,
                                   The_Routing_Table => My_Routing_Table);
-               Sent_Arr (Sent_Arr_Index) := Message_Router;
+               Sent_Arr (Sent_Arr_Index) := RouterMsg;
                Sent_Arr_Index := Sent_Arr_Index + 1;
                select
-                  nbr.Link.all.Router_Send (Message_Router);
-                 -- Put_Line (Router_Range'Image (Task_Id) & " sent a message to " & Router_Range'Image (nbr.Id));
+                  nbr.Link.all.Router_Send (RouterMsg);
+                  -- Put_Line (Router_Range'Image (Task_Id) & " sent a message to " & Router_Range'Image (nbr.Id));
                or
                   delay 0.01;
                   Sent_Arr_Index := Sent_Arr_Index - 1; -- Didn't send, remove from sent array
-                  Current_Item.Msg := Message_Router;
+                  Current_Item.Msg := RouterMsg;
                   Current_Item.Link := nbr.Link;
                   Current_Item.Id := nbr.Id;
                   Enqueue (Item => Current_Item, Queue => Wait_Queue);
@@ -71,9 +71,6 @@ package body Generic_Router is
                end select;
             end loop;
          end Dynamic_Sender;
-         Dynamic_Sender_Instance : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
-         pragma Unreferenced (Dynamic_Sender_Instance);
-         Found : Boolean := False;
       begin
          -- Build routing table to include my neighbors and myself.
          My_Routing_Table (Task_Id).Cost := 0;
@@ -84,36 +81,76 @@ package body Generic_Router is
             My_Routing_Table (nbr.Id).Online := True;
             -- Put_Line (Router_Range'Image (Task_Id) & " has" & Router_Range'Image(nbr.Id));
          end loop;
+         declare
+            Dynamic_Sender_Instance : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
+            pragma Unreferenced (Dynamic_Sender_Instance);
+         begin
+            null;
+         end;
 
          receive :
          loop
-            select
-               accept Router_Send (Message : Router_Messages) do
-                  Put_Line (Router_Range'Image (Task_Id) & " Received a message from " & Router_Range'Image (Message.Sender));
-                  Message_Router := Message;
-               end Router_Send;
-               delay 0.0;
-               Found := False;
-               for msg of Sent_Arr loop
-                  if msg = Message_Router then
-                     Found := True;
-                  end if;
-                  exit when Found;
-               end loop;
+            declare
+               Need_2_Send : Boolean := False;
+               -- Distance Vector Routing Algorithm (Bellman-Ford Algorithm)
+               -- Dx(y) = min {current estimiate, c(x,v) + Dv(y)}
+               Cxv : constant Natural := 1; -- C(x,v) Cost of x to neighbor v
+               Dvy : Natural; -- Distance from neighbor v to destination y
+            begin
+               select
+                  accept Router_Send (Message : Router_Messages) do
+                     Put_Line (Router_Range'Image (Task_Id) & " Received a message from " & Router_Range'Image (Message.Sender));
+                     if Task_Id = RouterMsg.Sender then
+                        Need_2_Send := False;
+                     else
+                        Need_2_Send := True;
+                        RouterMsg := Message;
+                     end if;
+                  end Router_Send;
+                  if Need_2_Send then
+                     for i in RouterMsg.The_Routing_Table'Range loop
+                        if RouterMsg.The_Routing_Table (i).Cost /= Natural'Invalid_Value then
+                           Dvy := RouterMsg.The_Routing_Table (i).Cost;
+                           if My_Routing_Table (i).Cost = Natural'Invalid_Value or else My_Routing_Table (i).Cost > Cxv + Dvy then
+                              My_Routing_Table (i).Cost := Cxv + Dvy;
+                              My_Routing_Table (i).Next_Hop := RouterMsg.Sender;
+                              Put_Line ("new RT");
+                              Need_2_Send := True;
+                           end if;
+                        elsif RouterMsg.The_Routing_Table (i).Cost = Natural'Invalid_Value and then My_Routing_Table (i).Cost /= Natural'Invalid_Value then
+                           Need_2_Send := True;
+                           Put_Line ("nbr is fool");
+                        else
+                           Need_2_Send := False;
+                        end if;
+                     end loop;
 
-               if not Found then
-                  declare
-                     Dynamic_Sender_Instance2 : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
-                     pragma Unreferenced (Dynamic_Sender_Instance2);
-                  begin
-                     null;
-                  end;
-               end if;
-              -- exit receive;
-            or
-               delay 0.0005;
-              -- Put_Line (Router_Range'Image (Task_Id) &  " Entered select else part");
-            end select;
+                     for msg of Sent_Arr loop
+                        if msg = RouterMsg then
+                           Need_2_Send := False; -- Found same message sent before
+                           Put_Line ("Sent before");
+                        end if;
+                        exit when not Need_2_Send;
+                     end loop;
+
+                     if Need_2_Send then
+                        declare
+                           Dynamic_Sender_Instance2 : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
+                           pragma Unreferenced (Dynamic_Sender_Instance2);
+                        begin
+                           null;
+                        end;
+                     else
+                        Put_Line ("-");
+                     end if;
+                  end if;
+                  -- exit receive;
+               or
+                  delay 0.0005;
+                  -- Put_Line (Router_Range'Image (Task_Id) &  " Entered select else part");
+               end select;
+            end;
+
          end loop receive;
          Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
          accept Shutdown;

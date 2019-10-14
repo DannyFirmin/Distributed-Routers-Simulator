@@ -34,7 +34,7 @@ package Generic_Message_Structures is
    --  Add one or multiple more messages formats here ..
    type Routing_Table_Entry is record
       -- Destination is the array index
-      Cost : Natural := 0;
+      Cost : Natural := Natural'Invalid_Value;
       Next_Hop : Router_Range := Router_Range'Invalid_Value;
       Online : Boolean := True;
    end record;
