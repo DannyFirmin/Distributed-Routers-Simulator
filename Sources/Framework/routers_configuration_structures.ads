@@ -11,8 +11,8 @@ package Routers_Configuration_Structures is
    type Test_Modes is (One_To_All, All_to_One);
 
    type Command_Line_Options is record
-      Selected_Topology   : Preconfigured_Topologies := Line;
-      Size                : Positive                 := 6;
+      Selected_Topology   : Preconfigured_Topologies := Cube_Connected_Cycles;
+      Size                : Positive                 := 20;
       Degree              : Positive                 := 3;
       Depths              : Positive                 := 4;
       Dimension           : Positive                 := 3;
