@@ -140,7 +140,7 @@ package body Generic_Router is
                for nbr of Port_List loop
                   if nbr.Id = My_Routing_Table (Msg.Destination).Next_Hop then
                      nbr.Link.all.Router_Send (Msg);
-                     Put_Line ("Msg sent to " & Router_Range'Image (nbr.Id));
+                   --  Put_Line ("Msg sent to " & Router_Range'Image (nbr.Id));
                   end if;
                end loop;
             end Pass_Task_Parameter;
@@ -208,12 +208,12 @@ package body Generic_Router is
                         end if;
 
                         if Message_Strings.Length (Message.Core_Msg) /= 0 and then Message.Destination = Task_Id then
-                           Put_Line ("This msg is for me! YEAH!");
+                          -- Put_Line ("This msg is for me! YEAH!");
                            Message_Receive := (Sender => Message.Sender,
                                                The_Message => Message.Core_Msg,
                                                Hop_Counter => Message.Hop_Counter);
                         elsif Message_Strings.Length (Message.Core_Msg) /= 0 and then Message.Destination /= Task_Id then
-                           Put_Line ("This msg is for " & Router_Range'Image (Message.Destination));
+                          -- Put_Line ("This msg is for " & Router_Range'Image (Message.Destination));
                            declare
                               RouterMsg_Out3 : Router_Messages;
                               Dynamic_Send2Next_Instance2 : constant Dynamic_Send2Next_Ptr := new Dynamic_Send2Next;
@@ -256,8 +256,8 @@ package body Generic_Router is
                   end Receive_Message;
                or
                   accept Shutdown;
-                  Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
-                  -- Put_Line (Router_Range'Image (Task_Id) &  " Entered select else part");
+                  exit receive;
+               --   Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
                end select;
             end;
 
