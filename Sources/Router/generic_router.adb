@@ -6,6 +6,7 @@
 
 with Exceptions; use Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
+
 package body Generic_Router is
 
    task body Router_Task is
@@ -70,9 +71,9 @@ package body Generic_Router is
             end Find;
          end Sent_RouterMsg;
 
-         task type Dynamic_Sender;
-         type Dynamic_Sender_Ptr is access Dynamic_Sender;
-         task body Dynamic_Sender is
+         task type Dynamic_Send2Nbr;
+         type Dynamic_Send2Nbr_Ptr is access Dynamic_Send2Nbr;
+         task body Dynamic_Send2Nbr is
          begin
             declare
                RouterMsg_Out : Router_Messages;
@@ -84,7 +85,9 @@ package body Generic_Router is
                   RouterMsg_Out := (Sender => Task_Id,
                                     Destination => nbr.Id,
                                     Offline_Broadcast => False,
-                                    The_Routing_Table => My_Routing_Table);
+                                    The_Routing_Table => My_Routing_Table,
+                                    Core_Msg => Message_Strings.To_Bounded_String (""),
+                                    Hop_Counter => 0);
                   Sent_RouterMsg.Find (Item => RouterMsg_Out, Result => Found);
                   if not Found then
                      Sent_RouterMsg.Put (Item => RouterMsg_Out);
@@ -123,7 +126,26 @@ package body Generic_Router is
                end loop;
 
             end;
-         end Dynamic_Sender;
+         end Dynamic_Send2Nbr;
+
+         task type Dynamic_Send2Next is
+            entry Pass_Task_Parameter (Msg : Router_Messages);
+         end Dynamic_Send2Next;
+
+         type Dynamic_Send2Next_Ptr is access Dynamic_Send2Next;
+
+         task body Dynamic_Send2Next is
+         begin
+            accept Pass_Task_Parameter (Msg : in Router_Messages) do
+               for nbr of Port_List loop
+                  if nbr.Id = My_Routing_Table (Msg.Destination).Next_Hop then
+                     nbr.Link.all.Router_Send (Msg);
+                     Put_Line ("Msg sent to " & Router_Range'Image (nbr.Id));
+                  end if;
+               end loop;
+            end Pass_Task_Parameter;
+         end Dynamic_Send2Next;
+
       begin
          -- Build routing table to include my neighbors and myself.
          My_Routing_Table (Task_Id).Cost := 0;
@@ -135,8 +157,8 @@ package body Generic_Router is
             -- Put_Line (Router_Range'Image (Task_Id) & " has" & Router_Range'Image(nbr.Id));
          end loop;
          declare
-            Dynamic_Sender_Instance : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
-            pragma Unreferenced (Dynamic_Sender_Instance);
+            Dynamic_Send2Nbr_Instance : constant Dynamic_Send2Nbr_Ptr := new Dynamic_Send2Nbr;
+            pragma Unreferenced (Dynamic_Send2Nbr_Instance);
          begin
             null;
          end;
@@ -149,24 +171,25 @@ package body Generic_Router is
                -- Dx(y) = min {current estimiate, c(x,v) + Dv(y)}
                Cxv : constant Natural := 1; -- C(x,v) Cost of x to neighbor v
                Dvy : Natural; -- Distance from neighbor v to destination y
+               Wait_Queue : Queue_Type;
+               Current_Item  : Queue_Element;
             begin
                select
                   accept Router_Send (Message : Router_Messages) do
-                     Put_Line (Router_Range'Image (Task_Id) & " Received a message from " & Router_Range'Image (Message.Sender));
+                     --  Put_Line (Router_Range'Image (Task_Id) & " Received a message from " & Router_Range'Image (Message.Sender));
                      if Task_Id /= Message.Sender then
-
                         for i in Message.The_Routing_Table'Range loop
                            if Message.The_Routing_Table (i).Cost /= Natural'Invalid_Value then
                               Dvy := Message.The_Routing_Table (i).Cost;
                               if My_Routing_Table (i).Cost = Natural'Invalid_Value or else My_Routing_Table (i).Cost > Cxv + Dvy then
                                  My_Routing_Table (i).Cost := Cxv + Dvy;
                                  My_Routing_Table (i).Next_Hop := Message.Sender;
-                                 Put_Line ("new RT");
+                                 --   Put_Line ("new RT");
                                  Need_2_Send := True;
                               end if;
                            elsif Message.The_Routing_Table (i).Cost = Natural'Invalid_Value and then My_Routing_Table (i).Cost /= Natural'Invalid_Value then
                               Need_2_Send := True;
-                              Put_Line ("nbr is fool");
+                              --    Put_Line ("nbr is fool");
                            else
                               Need_2_Send := False;
                            end if;
@@ -174,19 +197,63 @@ package body Generic_Router is
 
                         if Need_2_Send then
                            declare
-                              Dynamic_Sender_Instance2 : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
-                              pragma Unreferenced (Dynamic_Sender_Instance2);
+                              Dynamic_Send2Nbr_Instance2 : constant Dynamic_Send2Nbr_Ptr := new Dynamic_Send2Nbr;
+                              pragma Unreferenced (Dynamic_Send2Nbr_Instance2);
                            begin
                               null;
                            end;
                         else
-                           Put_Line ("No need to send");
+                           null;
+                           --   Put_Line ("No need to send");
+                        end if;
+
+                        if Message_Strings.Length (Message.Core_Msg) /= 0 and then Message.Destination = Task_Id then
+                           Put_Line ("This msg is for me! YEAH!");
+                           Message_Receive := (Sender => Message.Sender,
+                                               The_Message => Message.Core_Msg,
+                                               Hop_Counter => Message.Hop_Counter);
+                        elsif Message_Strings.Length (Message.Core_Msg) /= 0 and then Message.Destination /= Task_Id then
+                           Put_Line ("This msg is for " & Router_Range'Image (Message.Destination));
+                           declare
+                              RouterMsg_Out3 : Router_Messages;
+                              Dynamic_Send2Next_Instance2 : constant Dynamic_Send2Next_Ptr := new Dynamic_Send2Next;
+                           begin
+                              RouterMsg_Out3 := (Sender => Message.Sender,
+                                                 Destination => Message.Destination,
+                                                 Offline_Broadcast => False,
+                                                 The_Routing_Table => My_Routing_Table,
+                                                 Core_Msg => Message.Core_Msg,
+                                                 Hop_Counter => Message.Hop_Counter + 1);
+                              Dynamic_Send2Next_Instance2.all.Pass_Task_Parameter (RouterMsg_Out3);
+                           end;
                         end if;
 
                      end if;
                   end Router_Send;
+               or
+                  accept Send_Message (Message : in Messages_Client) do
+                     if My_Routing_Table (Message.Destination).Next_Hop'Valid then
+                        declare
+                           RouterMsg_Out2 : Router_Messages;
+                           Dynamic_Send2Next_Instance : constant Dynamic_Send2Next_Ptr := new Dynamic_Send2Next;
+                        begin
+                           RouterMsg_Out2 := (Sender => Task_Id,
+                                              Destination => Message.Destination,
+                                              Offline_Broadcast => False,
+                                              The_Routing_Table => My_Routing_Table,
+                                              Core_Msg => Message.The_Message,
+                                              Hop_Counter => 1);
+                           Dynamic_Send2Next_Instance.all.Pass_Task_Parameter (RouterMsg_Out2);
+                        end;
+                     end if;
+
+                  end Send_Message;
 
                   -- exit receive;
+               or
+                  accept Receive_Message (Message : out Messages_Mailbox) do
+                     Message := Message_Receive;
+                  end Receive_Message;
                or
                   accept Shutdown;
                   Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
@@ -200,5 +267,4 @@ package body Generic_Router is
    exception
       when Exception_Id : others => Show_Exception (Exception_Id);
    end Router_Task;
-
 end Generic_Router;

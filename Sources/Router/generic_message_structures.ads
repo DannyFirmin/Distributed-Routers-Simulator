@@ -46,6 +46,8 @@ package Generic_Message_Structures is
       Destination : Router_Range := Router_Range'Invalid_Value;
       Offline_Broadcast : Boolean := False;
       The_Routing_Table : Routing_Table;
+      Core_Msg : The_Core_Message := Message_Strings.To_Bounded_String ("");
+      Hop_Counter : Natural := 0;
    end record;
 
 end Generic_Message_Structures;
