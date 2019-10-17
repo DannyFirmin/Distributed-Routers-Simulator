@@ -144,7 +144,6 @@ package body Generic_Router is
          receive :
          loop
             declare
-               RouterMsg_In : Router_Messages;
                Need_2_Send : Boolean := False;
                -- Distance Vector Routing Algorithm (Bellman-Ford Algorithm)
                -- Dx(y) = min {current estimiate, c(x,v) + Dv(y)}
@@ -154,52 +153,48 @@ package body Generic_Router is
                select
                   accept Router_Send (Message : Router_Messages) do
                      Put_Line (Router_Range'Image (Task_Id) & " Received a message from " & Router_Range'Image (Message.Sender));
-                     if Task_Id = Message.Sender then
-                        Need_2_Send := False;
-                     else
-                        Need_2_Send := True;
-                        RouterMsg_In := Message;
+                     if Task_Id /= Message.Sender then
+
+                        for i in Message.The_Routing_Table'Range loop
+                           if Message.The_Routing_Table (i).Cost /= Natural'Invalid_Value then
+                              Dvy := Message.The_Routing_Table (i).Cost;
+                              if My_Routing_Table (i).Cost = Natural'Invalid_Value or else My_Routing_Table (i).Cost > Cxv + Dvy then
+                                 My_Routing_Table (i).Cost := Cxv + Dvy;
+                                 My_Routing_Table (i).Next_Hop := Message.Sender;
+                                 Put_Line ("new RT");
+                                 Need_2_Send := True;
+                              end if;
+                           elsif Message.The_Routing_Table (i).Cost = Natural'Invalid_Value and then My_Routing_Table (i).Cost /= Natural'Invalid_Value then
+                              Need_2_Send := True;
+                              Put_Line ("nbr is fool");
+                           else
+                              Need_2_Send := False;
+                           end if;
+                        end loop;
+
+                        if Need_2_Send then
+                           declare
+                              Dynamic_Sender_Instance2 : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
+                              pragma Unreferenced (Dynamic_Sender_Instance2);
+                           begin
+                              null;
+                           end;
+                        else
+                           Put_Line ("No need to send");
+                        end if;
+
                      end if;
                   end Router_Send;
-                  if Need_2_Send then
-                     for i in RouterMsg_In.The_Routing_Table'Range loop
-                        if RouterMsg_In.The_Routing_Table (i).Cost /= Natural'Invalid_Value then
-                           Dvy := RouterMsg_In.The_Routing_Table (i).Cost;
-                           if My_Routing_Table (i).Cost = Natural'Invalid_Value or else My_Routing_Table (i).Cost > Cxv + Dvy then
-                              My_Routing_Table (i).Cost := Cxv + Dvy;
-                              My_Routing_Table (i).Next_Hop := RouterMsg_In.Sender;
-                              Put_Line ("new RT");
-                              Need_2_Send := True;
-                           end if;
-                        elsif RouterMsg_In.The_Routing_Table (i).Cost = Natural'Invalid_Value and then My_Routing_Table (i).Cost /= Natural'Invalid_Value then
-                           Need_2_Send := True;
-                           Put_Line ("nbr is fool");
-                        else
-                           Need_2_Send := False;
-                        end if;
-                     end loop;
 
-                     if Need_2_Send then
-                        declare
-                           Dynamic_Sender_Instance2 : constant Dynamic_Sender_Ptr := new Dynamic_Sender;
-                           pragma Unreferenced (Dynamic_Sender_Instance2);
-                        begin
-                           null;
-                        end;
-                     else
-                        Put_Line ("-");
-                     end if;
-                  end if;
                   -- exit receive;
                or
-                  delay 0.0005;
+                  accept Shutdown;
+                  Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
                   -- Put_Line (Router_Range'Image (Task_Id) &  " Entered select else part");
                end select;
             end;
 
          end loop receive;
-         Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
-         accept Shutdown;
       end;
 
    exception
