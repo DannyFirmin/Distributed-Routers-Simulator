@@ -5,7 +5,7 @@
 with Generic_Message_Structures;
 with Generic_Router_Links;
 with Id_Dispenser;
-with Queue_Pack_Generic;
+with Queue_Pack_Protected_Generic;
 
 generic
 
@@ -31,8 +31,10 @@ package Generic_Router is
       Link : Router_Task_P;
    end record;
 
+   type Queue_Size is mod 20;
+
    package Queue_Pack_Msg is
-     new Queue_Pack_Generic (Element => Queue_Element, Queue_Size => 20);
+     new Queue_Pack_Protected_Generic (Element => Queue_Element, Index => Queue_Size);
    use Queue_Pack_Msg;
 
    task type Router_Task (Task_Id  : Router_Range := Draw_Id) is

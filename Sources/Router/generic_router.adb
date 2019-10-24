@@ -6,7 +6,6 @@
 
 with Exceptions; use Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
-
 package body Generic_Router is
 
    task body Router_Task is
@@ -77,7 +76,7 @@ package body Generic_Router is
          begin
             declare
                RouterMsg_Out : Router_Messages;
-               Wait_Queue : Queue_Type;
+               Wait_Queue : Protected_Queue;
                Current_Item  : Queue_Element;
                Found : Boolean := False;
             begin
@@ -100,14 +99,14 @@ package body Generic_Router is
                         Current_Item.Msg := RouterMsg_Out;
                         Current_Item.Link := nbr.Link;
                         Current_Item.Id := nbr.Id;
-                        Enqueue (Item => Current_Item, Queue => Wait_Queue);
+                        Wait_Queue.Enqueue (Current_Item);
                         Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (nbr.Id) & ". Added msg to queue");
                      end select;
                   end if;
                end loop;
 
-               while not Is_Empty (Wait_Queue) loop
-                  Dequeue (Current_Item, Wait_Queue);
+               while not Wait_Queue.Is_Empty loop
+                  Wait_Queue.Dequeue (Current_Item);
                   Sent_RouterMsg.Find (Item => Current_Item.Msg, Result => Found);
                   if not Found then
                      Sent_RouterMsg.Put (Item => Current_Item.Msg);
@@ -118,7 +117,7 @@ package body Generic_Router is
                         delay 0.01;
                         Sent_RouterMsg.Remove_Last;
                         -- No response, send failed, store the msg back to the queue
-                        Enqueue (Item => Current_Item, Queue => Wait_Queue);
+                        Wait_Queue.Enqueue (Current_Item);
                         Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (Current_Item.Id) & ". Added msg BACK to queue");
                      end select;
 
@@ -171,7 +170,7 @@ package body Generic_Router is
                -- Dx(y) = min {current estimiate, c(x,v) + Dv(y)}
                Cxv : constant Natural := 1; -- C(x,v) Cost of x to neighbor v
                Dvy : Natural; -- Distance from neighbor v to destination y
-               Wait_Queue : Queue_Type;
+               Wait_Queue : Protected_Queue;
                Current_Item  : Queue_Element;
             begin
                select
@@ -256,6 +255,14 @@ package body Generic_Router is
                   end Receive_Message;
                or
                   accept Shutdown;
+--                    if Task_Id = 5 then
+--                       for i in My_Routing_Table'Range loop
+--                          Put_Line ("Dest: " & Router_Range'Image(i));
+--                          Put_Line ("Cost: " & Natural'Image(My_Routing_Table(i).Cost));
+--                          Put_Line ("Next_Hop: " & Router_Range'Image(My_Routing_Table(i).Next_Hop));
+--                      end loop;
+--                    end if;
+
                   exit receive;
                --   Put_Line (Router_Range'Image (Task_Id) & " Shutdown!");
                end select;
