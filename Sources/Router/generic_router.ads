@@ -50,7 +50,7 @@ package Generic_Router is
       -- to communicate with your router.
 
       --  Add one or multiple further entries for inter-router communications here
-      entry Router_Send (Message : Router_Messages);
+      entry Router_Send (Message : Router_Messages); -- for my wrapped up msg
 
    end Router_Task;
 

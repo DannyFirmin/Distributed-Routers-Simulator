@@ -43,7 +43,7 @@ package Generic_Message_Structures is
 
    type Routing_Table is array (Router_Range) of Routing_Table_Entry;
 
-   type Router_Messages is record
+   type Router_Messages is record -- my message for both init and normal traffic
       Sender : Router_Range := Router_Range'Invalid_Value;
       Destination : Router_Range := Router_Range'Invalid_Value;
       Offline_Broadcast : Boolean := False;

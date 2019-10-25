@@ -26,10 +26,12 @@ package body Generic_Router is
          type Sent_Arr_Index_Type is mod 99;
          type Sent_Arr_Type is array (Sent_Arr_Index_Type) of Router_Messages;
 
+         -- Protected array shared between sender tasks. To remember what I sent
+         -- So that sender can filter junk msg to make system fast and efficient
          protected Sent_RouterMsg is
             entry Put (Item : Router_Messages);
             entry Remove_Last;
-            entry Find (Item : out Router_Messages; Result : out Boolean);
+            entry Find (Item : Router_Messages; Result : out Boolean);
          private
             Index : Sent_Arr_Index_Type := 0;
             Sent_Arr : Sent_Arr_Type;
@@ -52,12 +54,11 @@ package body Generic_Router is
                Done := True;
             end Remove_Last;
 
-            entry Find (Item : out Router_Messages; Result : out Boolean) when Done is
+            entry Find (Item : Router_Messages; Result : out Boolean) when Done is
             begin
                Done := False;
                for e of Sent_Arr loop
                   if e.Sender = Item.Sender and then e.Destination = Item.Destination and then e.Offline_Broadcast = Item.Offline_Broadcast and then e.The_Routing_Table = Item.The_Routing_Table then
-                     Item := e;
                      Result := True;
                      exit;
                   else
@@ -72,12 +73,12 @@ package body Generic_Router is
          type Dynamic_Send2Nbr_Ptr is access Dynamic_Send2Nbr;
          task body Dynamic_Send2Nbr is
             RouterMsg_Out : Router_Messages;
+            -- Each sender has a local queue to requeue the msg if no response for now
             Wait_Queue : Queue_Type;
             Current_Item  : Queue_Element;
             Found : Boolean := False;
          begin
             for nbr of Port_List loop
-               pragma Warnings (Off, "useless assignment to ""RouterMsg_Out"", value overwritten at line 87");
                RouterMsg_Out := (Sender => Task_Id,
                                  Destination => nbr.Id,
                                  Offline_Broadcast => False,
@@ -85,7 +86,6 @@ package body Generic_Router is
                                  Core_Msg => Message_Strings.To_Bounded_String (""),
                                  Hop_Counter => 0);
                Sent_RouterMsg.Find (Item => RouterMsg_Out, Result => Found);
-               pragma Warnings (On, "useless assignment to ""RouterMsg_Out"", value overwritten at line 87");
                if not Found then
                   Sent_RouterMsg.Put (Item => RouterMsg_Out);
                   select
@@ -131,17 +131,14 @@ package body Generic_Router is
                My_Msg := Msg;
                for nbr of Port_List loop
                   if nbr.Id = My_Routing_Table (My_Msg.Destination).Next_Hop then
-                     select
-                        nbr.Link.all.Router_Send (My_Msg);
-                     or
-                        delay 0.01;
-                     end select;
+                     nbr.Link.all.Router_Send (My_Msg);
                   end if;
                end loop;
             end Pass_Task_Parameter;
          exception
             when Tasking_Error =>
                begin
+                  -- Not sure why after the task handled its neighbour's exception, it also dies. This will cause a chain effect. RIP.
                   Put_Line (Router_Range'Image (Task_Id) & " found " & Router_Range'Image (My_Routing_Table (My_Msg.Destination).Next_Hop) & " dead");
                   My_Routing_Table (My_Routing_Table (My_Msg.Destination).Next_Hop).Online := False;
                   My_Routing_Table (My_Routing_Table (My_Msg.Destination).Next_Hop).Cost := Offline_Cost;
@@ -164,7 +161,6 @@ package body Generic_Router is
             My_Routing_Table (nbr.Id).Cost := 1;
             My_Routing_Table (nbr.Id).Next_Hop := nbr.Id;
             My_Routing_Table (nbr.Id).Online := True;
-            -- Put_Line (Router_Range'Image (Task_Id) & " has" & Router_Range'Image(nbr.Id));
          end loop;
          declare
             Dynamic_Send2Nbr_Instance : constant Dynamic_Send2Nbr_Ptr := new Dynamic_Send2Nbr;
@@ -206,8 +202,8 @@ package body Generic_Router is
 
                         if Need_2_Send then
                            declare
-                              Dynamic_Send2Nbr_Instance2 : constant Dynamic_Send2Nbr_Ptr := new Dynamic_Send2Nbr;
-                              pragma Unreferenced (Dynamic_Send2Nbr_Instance2);
+                              Dynamic_Send2Nbr_Instance : constant Dynamic_Send2Nbr_Ptr := new Dynamic_Send2Nbr;
+                              pragma Unreferenced (Dynamic_Send2Nbr_Instance);
                            begin
                               null;
                            end;
@@ -219,7 +215,7 @@ package body Generic_Router is
                                                The_Message => Message.Core_Msg,
                                                Hop_Counter => Message.Hop_Counter);
                         elsif Message_Strings.Length (Message.Core_Msg) /= 0 and then Message.Destination /= Task_Id then
-                           -- This msg is for Message.Destination
+                           -- This msg is for others
                            declare
                               RouterMsg_Out : Router_Messages;
                               Dynamic_Send2Next_Instance : constant Dynamic_Send2Next_Ptr := new Dynamic_Send2Next;
