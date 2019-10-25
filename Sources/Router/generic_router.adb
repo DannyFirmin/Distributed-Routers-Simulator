@@ -3,6 +3,9 @@
 --
 --  Student: Danny Feng (u6611178), Australia, 2019
 --
+-- My implementation can finish building the routing table correctly in a flash
+-- because there are several concurrent senders, efficient message filter, requeue technique, and no waiting time.
+-- Normal traffic is also fast.
 
 with Exceptions; use Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -73,7 +76,7 @@ package body Generic_Router is
          type Dynamic_Send2Nbr_Ptr is access Dynamic_Send2Nbr;
          task body Dynamic_Send2Nbr is
             RouterMsg_Out : Router_Messages;
-            -- Each sender has a local queue to requeue the msg if no response for now
+            -- Each sender has a local queue to requeue the msg if currently no response
             Wait_Queue : Queue_Type;
             Current_Item  : Queue_Element;
             Found : Boolean := False;
