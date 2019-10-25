@@ -44,6 +44,7 @@ package Generic_Router is
       entry Send_Message    (Message :     Messages_Client);
       entry Receive_Message (Message : out Messages_Mailbox);
 
+      entry Alive_Test;
       entry Shutdown;
 
       -- Leave anything above this line as it will be used by the testing framework

@@ -96,34 +96,33 @@ package body Generic_Router is
                      or
                         delay 0.01;
                         Sent_RouterMsg.Remove_Last; -- Didn't send, remove from sent array
-                        Current_Item.Msg := RouterMsg_Out;
-                        Current_Item.Link := nbr.Link;
-                        Current_Item.Id := nbr.Id;
-                        Wait_Queue.Enqueue (Current_Item);
-                        Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (nbr.Id) & ". Added msg to queue");
+--                          Current_Item.Msg := RouterMsg_Out;
+--                          Current_Item.Link := nbr.Link;
+--                          Current_Item.Id := nbr.Id;
+--                          Wait_Queue.Enqueue (Current_Item);
+--                          Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (nbr.Id) & ". Added msg to queue");
                      end select;
                   end if;
                end loop;
 
-               while not Wait_Queue.Is_Empty loop
-                  Wait_Queue.Dequeue (Current_Item);
-                  Sent_RouterMsg.Find (Item => Current_Item.Msg, Result => Found);
-                  if not Found then
-                     Sent_RouterMsg.Put (Item => Current_Item.Msg);
-                     select
-                        Current_Item.Link.all.Router_Send (Current_Item.Msg);
-                        Put_Line (Router_Range'Image (Task_Id) & " sent a message to " & Router_Range'Image (Current_Item.Id) & " thanks to the queue");
-                     or
-                        delay 0.01;
-                        Sent_RouterMsg.Remove_Last;
-                        -- No response, send failed, store the msg back to the queue
-                        Wait_Queue.Enqueue (Current_Item);
-                        Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (Current_Item.Id) & ". Added msg BACK to queue");
-                     end select;
-
-                  end if;
-               end loop;
-
+--                 while not Wait_Queue.Is_Empty loop
+--                    Wait_Queue.Dequeue (Current_Item);
+--                    Sent_RouterMsg.Find (Item => Current_Item.Msg, Result => Found);
+--                    if not Found then
+--                       Sent_RouterMsg.Put (Item => Current_Item.Msg);
+--                       select
+--                          Current_Item.Link.all.Router_Send (Current_Item.Msg);
+--                          Put_Line (Router_Range'Image (Task_Id) & " sent a message to " & Router_Range'Image (Current_Item.Id) & " thanks to the queue");
+--                       or
+--                          delay 0.01;
+--                          Sent_RouterMsg.Remove_Last;
+--                          -- No response, send failed, store the msg back to the queue
+--                          Wait_Queue.Enqueue (Current_Item);
+--                          Put_Line (Router_Range'Image (Task_Id) & " failed to send msg to" & Router_Range'Image (Current_Item.Id) & ". Added msg BACK to queue");
+--                       end select;
+--
+--                    end if;
+--                 end loop;
             end;
          end Dynamic_Send2Nbr;
 
@@ -134,18 +133,31 @@ package body Generic_Router is
          type Dynamic_Send2Next_Ptr is access Dynamic_Send2Next;
 
          task body Dynamic_Send2Next is
+            My_Msg : Router_Messages;
          begin
             accept Pass_Task_Parameter (Msg : in Router_Messages) do
+               My_Msg := Msg;
                for nbr of Port_List loop
-                  if nbr.Id = My_Routing_Table (Msg.Destination).Next_Hop then
-                     nbr.Link.all.Router_Send (Msg);
-                   --  Put_Line ("Msg sent to " & Router_Range'Image (nbr.Id));
-                  end if;
+                  if nbr.Id = My_Routing_Table (My_Msg.Destination).Next_Hop then
+                     select
+                        nbr.Link.all.Router_Send (My_Msg);
+                        --  Put_Line ("Msg sent to " & Router_Range'Image (nbr.Id));
+                     or
+                        delay 0.01;
+                        Put_Line (Router_Range'Image (nbr.Id) & " is fucking dead");
+                     end select;
+                     end if;
                end loop;
             end Pass_Task_Parameter;
+         exception
+            when Tasking_Error =>
+                begin
+                  Put_Line (Router_Range'Image (Task_Id) & " found " & Router_Range'Image (My_Routing_Table (My_Msg.Destination).Next_Hop) & " dead");
+               end;
          end Dynamic_Send2Next;
 
       begin
+
          -- Build routing table to include my neighbors and myself.
          My_Routing_Table (Task_Id).Cost := 0;
          My_Routing_Table (Task_Id).Next_Hop := Task_Id;
@@ -254,7 +266,12 @@ package body Generic_Router is
                      Message := Message_Receive;
                   end Receive_Message;
                or
+                  accept Alive_Test  do
+                     Put_Line ("I am alive");
+                  end Alive_Test;
+               or
                   accept Shutdown;
+                  Put_Line ("Shuting down");
 --                    if Task_Id = 5 then
 --                       for i in My_Routing_Table'Range loop
 --                          Put_Line ("Dest: " & Router_Range'Image(i));
