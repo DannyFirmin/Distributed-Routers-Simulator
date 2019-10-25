@@ -1,11 +1,13 @@
 --
---  Framework: Uwe R. Zimmer, Australia, 2015
+--  Framework: Uwe R. Zimmer, Australia, 2019
+--
+--  Student: Danny Feng (u6611178), Australia, 2019
 --
 
 with Generic_Message_Structures;
 with Generic_Router_Links;
 with Id_Dispenser;
-with Queue_Pack_Protected_Generic;
+with Queue_Pack_Generic;
 
 generic
 
@@ -31,10 +33,8 @@ package Generic_Router is
       Link : Router_Task_P;
    end record;
 
-   type Queue_Size is mod 20;
-
    package Queue_Pack_Msg is
-     new Queue_Pack_Protected_Generic (Element => Queue_Element, Index => Queue_Size);
+     new Queue_Pack_Generic (Element => Queue_Element, Queue_Size => 20);
    use Queue_Pack_Msg;
 
    task type Router_Task (Task_Id  : Router_Range := Draw_Id) is
@@ -44,7 +44,6 @@ package Generic_Router is
       entry Send_Message    (Message :     Messages_Client);
       entry Receive_Message (Message : out Messages_Mailbox);
 
-      entry Alive_Test;
       entry Shutdown;
 
       -- Leave anything above this line as it will be used by the testing framework
@@ -52,7 +51,6 @@ package Generic_Router is
 
       --  Add one or multiple further entries for inter-router communications here
       entry Router_Send (Message : Router_Messages);
-      entry Router_Receive (Message : out Router_Messages);
 
    end Router_Task;
 
