@@ -3,9 +3,10 @@
 --
 --  Student: Danny Feng (u6611178), Australia, 2019
 --
--- My implementation can finish building the routing table correctly in a flash
+-- My implementation can finish building the routing table correctly in a flash (Low Routers_Settle_Time)
 -- because there are several concurrent senders, efficient message filter, requeue technique, and no waiting time.
 -- Normal traffic is also fast.
+-- Tested working correctly under different topologies.
 
 with Exceptions; use Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
