@@ -1,0 +1,4 @@
+generic_routers.ads:9:04: warning: in instantiation at queue_pack_protected_generic.adb:17
+generic_routers.ads:9:04: warning: in instantiation at generic_router.ads:30
+generic_routers.ads:9:04: warning: cannot call "Is_Empty" before body seen
+generic_routers.ads:9:04: warning: Program_Error will be raised at run time

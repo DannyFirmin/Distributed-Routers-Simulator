@@ -11,7 +11,7 @@ package Routers_Configuration_Structures is
    type Test_Modes is (One_To_All, All_to_One);
 
    type Command_Line_Options is record
-      Selected_Topology   : Preconfigured_Topologies := Cube_Connected_Cycles;
+      Selected_Topology   : Preconfigured_Topologies := Ring;
       Size                : Positive                 := 20;
       Degree              : Positive                 := 3;
       Depths              : Positive                 := 4;
@@ -21,7 +21,7 @@ package Routers_Configuration_Structures is
       Routers_Settle_Time : Duration                 := 0.1;
       Comms_Timeout       : Duration                 := 0.1;
       Test_Mode           : Test_Modes               := One_To_All;
-      Dropouts            : Natural                  := 0;
+      Dropouts            : Natural                  := 1;
    end record;
 
    function Get_Topology (Command_Line_Parameters : Command_Line_Options) return Topology_Kind'Class;

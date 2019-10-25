@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<Locations>
+  <Project>
+    <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_file>
+    <file_marker column=" 17" line=" 47" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_message_structures.ads</vfs_file>
+    </file_marker>
+    <file_marker column=" 18" line=" 34" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.ads</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 75" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/generic_router_links.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/routers_configuration_structures.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 58" line=" 21" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/routers_configuration_structures.ads</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 27" line=" 89" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 4" line=" 11" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 154" line=" 93" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 4" line=" 11" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 95" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 4" line=" 11" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/routers_configuration_structures.ads</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/routers_configuration_structures.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 95" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker column=" 4" line=" 11" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Router/generic_router.adb</vfs_file>
+    </file_marker>
+    <file_marker current="true" column=" 1" line=" 1" >
+      <vfs_project>/students/u6611178/git/Distributed-Routers-Simulator/routers.gpr</vfs_project>
+      <vfs_file>/students/u6611178/git/Distributed-Routers-Simulator/Sources/Framework/routers_configuration_structures.ads</vfs_file>
+    </file_marker>
+  </Project>
+</Locations>

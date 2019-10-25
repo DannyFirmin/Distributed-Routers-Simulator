@@ -25,16 +25,10 @@ package Generic_Router is
    package Router_Link is new Generic_Router_Links (Router_Range, Router_Task_P, null);
    use Router_Link;
 
-   type Queue_Element is record
-      Msg : Router_Messages;
-      Id : Router_Range;
-      Link : Router_Task_P;
-   end record;
-
    type Queue_Size is mod 20;
 
    package Queue_Pack_Msg is
-     new Queue_Pack_Protected_Generic (Element => Queue_Element, Index => Queue_Size);
+     new Queue_Pack_Protected_Generic (Element => Router_Messages, Index => Queue_Size);
    use Queue_Pack_Msg;
 
    task type Router_Task (Task_Id  : Router_Range := Draw_Id) is

@@ -1,0 +1,7 @@
+generic_router.adb:11:04: warning: no accept for entry "Router_Receive"
+generic_router.adb:26:10: warning: variable "Message_Send" is never read and never assigned
+generic_router.adb:33:19: warning: "Remove_Last" is not referenced
+generic_router.adb:125:16: warning: useless assignment to "RouterMsg_Out", value overwritten at line 131
+generic_router.ads:30:04: warning: in instantiation at queue_pack_protected_generic.adb:17
+generic_router.ads:30:04: warning: cannot call "Is_Empty" before body seen
+generic_router.ads:30:04: warning: Program_Error will be raised at run time

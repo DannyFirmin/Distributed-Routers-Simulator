@@ -6,7 +6,7 @@ package body Queue_Pack_Protected_Generic is
 
    protected body Protected_Queue is
 
-      entry Enqueue (Item : Element) when not Is_Full is
+      entry Enqueue (Item : Element) when True is
 
       begin
          Queue.Elements (Queue.Free) := Item;
